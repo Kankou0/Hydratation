@@ -1,0 +1,90 @@
+Journal des corrections
+Suivi Hydratation — de Google AI Studio à une application fonctionnelle
+Chaque erreur est présentée en commentaire de code, suivie du code corrigé
+1. Catalogue de versions incomplet
+Fichier concerné : gradle/libs.versions.toml
+// Erreur : Invalid catalog definition.
+// version reference 'lifecycleRuntimeCompose' doesn't exist
+
+[versions]
+lifecycleRuntimeKtx = "2.8.7"
+lifecycleViewmodelCompose = "2.8.7"   // ajouté
+lifecycleRuntimeCompose = "2.8.7"     // ajouté
+
+2. Syntaxe compileSdk expérimentale
+Fichier concerné : app/build.gradle.kts
+// Erreur : Unresolved reference (compileSdk incompatible avec AGP 8.10.1)
+
+// Avant :
+// compileSdk { version = release(36) { minorApiLevel = 1 } }
+
+compileSdk = 36   // correction : syntaxe classique
+
+3. signingConfig debug invalide
+Fichier concerné : app/build.gradle.kts
+// Erreur : keystore introuvable (debug.keystore non fourni)
+
+// Avant :
+// debug {
+//     signingConfig = signingConfigs.getByName("debugConfig")
+// }
+
+debug {
+    // signingConfig par défaut d'Android Studio
+}
+
+4. Vérification Gemini / Firebase (non bloquant)
+Fichier concerné : .env, .env.example, app/build.gradle.kts
+// Vérification : recherche globale "Gemini" et "firebase" dans tout le projet
+// Résultat : aucune occurrence dans le code Kotlin (.kt)
+// Conclusion : scaffold générique Google AI Studio, sans usage réel
+
+
+5. android.useAndroidX non activé
+Fichier concerné : gradle.properties
+// Erreur : Configuration contains AndroidX dependencies,
+// but android.useAndroidX property is not enabled
+
+android.useAndroidX=true   // ajouté
+
+6. Plugin Kotlin manquant (Kotlin jamais compilé)
+Fichier concerné : gradle/libs.versions.toml + build.gradle.kts
+// Erreur : ClassNotFoundException: MainActivity introuvable
+// Cause : aucune tâche compileDebugKotlin ne s'exécutait
+
+// Dans libs.versions.toml [plugins] :
+kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }   // ajouté
+
+// Dans app/build.gradle.kts, plugins { } :
+alias(libs.plugins.kotlin.android)   // ajouté
+
+7. Incompatibilité KSP 2.3.5 / Kotlin 2.1.0
+Fichier concerné : gradle/libs.versions.toml
+// Erreur : NoSuchMethodError getJvmDefault()
+// Cause : KSP 2.3.5 nécessite Kotlin 2.2+ (doc officielle KSP)
+// (retrait du plugin roborazzi effectué en parallèle, non lié à cette erreur)
+
+kotlin = "2.2.0"   // remonté depuis 2.1.0
+
+8. Incohérence cible JVM Java/Kotlin
+Fichier concerné : app/build.gradle.kts
+// Erreur : Inconsistent JVM-target compatibility
+// compileDebugJavaWithJavac (11) vs compileDebugKotlin (21)
+
+kotlinOptions {
+    jvmTarget = "11"   // ajouté, aligné sur compileOptions
+}
+
+9. Application invisible sur l'émulateur
+Fichier concerné : Android Studio → Settings
+// Pas d'erreur de code : bug d'affichage du panneau "Running Devices"
+// Logs de lancement normaux (activité créée, ProfileInstaller terminé)
+
+// Correction : Settings > Tools > Emulator
+// -> décocher "Launch in the Running Devices tool window"
+// -> l'émulateur s'ouvre en fenêtre séparée, l'app s'affiche
+
+Statut final
+✅ Build réussi (BUILD SUCCESSFUL)
+✅ Application lancée et fonctionnelle sur émulateur Pixel 8 (API 37)
+✅ Fonctionnalités testées : ajout de 250 ml, remplissage du cercle, reset
