@@ -1,0 +1,64 @@
+Documentation du projet
+
+Suivi Hydratation — Application Android Jetpack Compose
+
+1. Objectif de l'application
+Suivi Hydratation est une application Android qui aide l'utilisateur à suivre sa consommation d'eau quotidienne par rapport à un objectif fixé à 2 litres. Elle propose une interface simple : un cercle de progression visuel, un bouton pour enregistrer une gorgée de 250 ml, un bouton de réinitialisation, et un historique des gorgées de la journée.
+
+2. Origine et méthode de création
+Le projet a été généré dans un premier temps via Google AI Studio (mode Build), à partir d'un prompt décrivant les fonctionnalités souhaitées : écran principal avec cercle de progression pour un objectif de 2 L, boutons + pour ajouter 250 ml et un bouton de reset, thème sombre Material 3 avec accents turquoise, gestion de l'état via un ViewModel.
+Le code généré a ensuite été importé dans Android Studio, où une série d'erreurs de configuration Gradle et de compatibilité de versions a été corrigée avant d'obtenir un build fonctionnel (voir Corrections.docx pour le détail complet).
+
+3. Écrans et parcours utilisateur
+3.1 Écran principal
+
+●	En-tête : titre « Suivi Hydratation » et date du jour
+●	Cercle de progression central : affiche le pourcentage de l'objectif atteint, avec une animation de remplissage et un effet de lueur turquoise
+●	Message d'encouragement : change dynamiquement selon la progression (0 %, < 35 %, < 70 %, < 100 %, objectif atteint)
+●	Rangée de boutons : « Reset » (à gauche) et « + 250 ml » (à droite, bouton principal)
+●	Section historique : liste des gorgées enregistrées dans la journée, avec l'heure et un bouton de suppression pour chaque entrée
+
+3.2 Boîte de dialogue de réinitialisation
+Un appui sur « Reset » ouvre une boîte de dialogue de confirmation (« Voulez-vous réinitialiser votre progression d'aujourd'hui ? Cette action est définitive. ») avant d'effacer les données du jour, afin d'éviter une réinitialisation accidentelle.
+
+4. Architecture technique
+4.1 Vue d'ensemble
+
+L'application suit une architecture en couches simple, inspirée du pattern MVVM (Model-View-ViewModel), avec une persistance locale via Room :
+UI (Composables, dans MainActivity.kt)         ↕ StateFlow ViewModel (WaterViewModel)         ↕ Repository (WaterRepository)         ↕ Base de données (WaterDatabase / Room)
+
+4.2 Couche de données
+●	WaterRecord : entité Room représentant une gorgée (id, quantité en ml, horodatage)
+●	WaterDatabase : classe Room exposant le DAO d'accès aux WaterRecord
+●	WaterRepository : encapsule les appels au DAO, expose des fonctions suspendues et des Flow pour le ViewModel
+
+4.3 Couche ViewModel
+WaterViewModel expose l'état de l'écran sous forme de StateFlow : quantité totale bue aujourd'hui (totalIntakeMl), progression (progress, entre 0 et 1), objectif quotidien (dailyGoalMl) et liste des enregistrements du jour (todayRecords). Il expose aussi les actions addWater(amount) et resetToday().
+
+4.4 Couche UI (Jetpack Compose)
+Toute l'interface est construite avec des composables Jetpack Compose, organisés en plusieurs fonctions réutilisables : HydrationScreen (écran racine), HeaderSection, ProgressCircleSection (dessin du cercle en Canvas), EncouragementText, ActionButtonsRow, HistorySection, HistoryItem et ResetConfirmationDialog.
+Le cercle de progression est dessiné manuellement avec l'API Canvas de Compose (drawArc), avec plusieurs passes superposées pour créer un effet de lueur (glow) autour de l'arc turquoise, plutôt que d'utiliser le composant standard CircularProgressIndicator.
+
+5. Thème visuel
+●	Palette : thème sombre Material 3, couleur d'accent turquoise (#00BFA6 / variantes)
+●	Typographie : tailles et graisses différenciées pour hiérarchiser titre, valeurs chiffrées et texte courant
+●	Composants Material 3 utilisés : Scaffold, Card, Button, OutlinedButton, IconButton, AlertDialog
+●	Coins arrondis systématiques (RoundedCornerShape) pour un rendu doux et moderne
+
+6. Dépendances principales
+Jetpack Compose (BOM) : Framework d'interface utilisateur déclaratif
+Material 3 : Composants visuels et système de thème
+Room : Persistance locale des gorgées enregistrées (SQLite)
+KSP : Génération de code pour l'annotation processing de Room
+Lifecycle ViewModel / Runtime Compose : Intégration du ViewModel avec le cycle de vie et Compose
+Kotlin Coroutines : Opérations asynchrones (accès base de données, Flow)
+Le projet contient également des dépendances non utilisées par le code actuel (Firebase, Retrofit, Moshi, CameraX, Accompanist Permissions, DataStore) — héritées du template générique de Google AI Studio. Voir Corrections.docx, point 4, pour le détail de cette vérification.
+
+7. Points d'attention pour une évolution future
+●	Nettoyage possible : retirer les dépendances Firebase/Retrofit/Moshi/CameraX si elles restent inutilisées, pour alléger le projet
+●	La fonction @Composable fun varShowResetDialog() = remember { mutableStateOf(false) } est une façon non conventionnelle d'écrire var showResetDialog by remember { mutableStateOf(false) } — fonctionnelle mais à uniformiser avec les conventions Kotlin standards si le code doit être repris par une équipe
+●	Le fichier .env / clé Gemini peut être retiré si aucune fonctionnalité IA n'est prévue à l'avenir
+●	Envisager l'ajout de tests unitaires sur WaterViewModel et WaterRepository, absents à ce stade
+
+8. Historique de mise en route
+Le détail complet des  erreurs rencontrées entre l'export du projet depuis Google AI Studio et son fonctionnement final dans Android Studio (catalogue de versions, compatibilité Kotlin/KSP, cible JVM, affichage de l'émulateur, etc.) est consigné dans le document Corrections.
