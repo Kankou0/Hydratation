@@ -1,0 +1,6 @@
+{
+  "name": "Suivi Hydratation",
+  "description": "Une application de suivi d'hydratation quotidienne moderne avec un cercle de progression de 2L et des commandes intuitives.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
